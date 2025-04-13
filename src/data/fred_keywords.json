@@ -1,0 +1,165 @@
+{
+  "gdp": {
+    "id": "GDP",
+    "label": "Gross Domestic Product",
+    "type": "growth"
+  },
+  "real gdp": {
+    "id": "GDPC1",
+    "label": "Real Gross Domestic Product (Chained 2012 Dollars)",
+    "type": "growth"
+  },
+  "inflation": {
+    "id": "CPIAUCSL",
+    "label": "Consumer Price Index for All Urban Consumers: All Items",
+    "type": "inflation"
+  },
+  "cpi": {
+    "id": "CPIAUCSL",
+    "label": "Consumer Price Index (CPI)",
+    "type": "inflation"
+  },
+  "core inflation": {
+    "id": "CPILFESL",
+    "label": "CPI: All Items Less Food and Energy",
+    "type": "inflation"
+  },
+  "yoy inflation": {
+    "id": "CPIAUCSL",
+    "label": "Year-over-Year Inflation",
+    "yoy": true,
+    "type": "inflation"
+  },
+  "core cpi yoy": {
+    "id": "CPILFESL",
+    "label": "Core CPI YoY",
+    "yoy": true,
+    "type": "inflation"
+  },
+  "core cpi mom": {
+    "id": "CPILFESL",
+    "label": "Core CPI MoM",
+    "yoy": false,
+    "type": "inflation"
+  },
+  "annual inflation": {
+    "id": "FPCPITOTLZGUSA",
+    "label": "Annual Inflation Rate (World Bank)",
+    "type": "inflation"
+  },
+  "unemployment": {
+    "id": "UNRATE",
+    "label": "Unemployment Rate",
+    "type": "employment"
+  },
+  "jobless rate": {
+    "id": "UNRATE",
+    "label": "Unemployment Rate",
+    "type": "employment"
+  },
+  "initial jobless claims": {
+    "id": "ICSA",
+    "label": "Initial Unemployment Insurance Claims",
+    "type": "employment"
+  },
+  "continuing claims": {
+    "id": "CCSA",
+    "label": "Continuing Unemployment Insurance Claims",
+    "type": "employment"
+  },
+  "nonfarm payrolls": {
+    "id": "PAYEMS",
+    "label": "All Employees, Total Nonfarm",
+    "type": "employment"
+  },
+  "interest rate": {
+    "id": "FEDFUNDS",
+    "label": "Federal Funds Effective Rate",
+    "type": "monetary"
+  },
+  "federal funds rate": {
+    "id": "FEDFUNDS",
+    "label": "Federal Funds Effective Rate",
+    "type": "monetary"
+  },
+  "fed rate": {
+    "id": "FEDFUNDS",
+    "label": "Federal Funds Effective Rate",
+    "type": "monetary"
+  },
+  "money supply": {
+    "id": "M2SL",
+    "label": "M2 Money Stock",
+    "type": "monetary"
+  },
+  "10 year yield": {
+    "id": "DGS10",
+    "label": "10-Year Treasury Constant Maturity Rate",
+    "type": "interest rates"
+  },
+  "treasury yield": {
+    "id": "DGS10",
+    "label": "10-Year Treasury Constant Maturity Rate",
+    "type": "interest rates"
+  },
+  "3 month bill": {
+    "id": "DTB3",
+    "label": "3-Month Treasury Bill: Secondary Market Rate",
+    "type": "bonds"
+  },
+  "pce": {
+    "id": "PCE",
+    "label": "Personal Consumption Expenditures",
+    "type": "inflation"
+  },
+  "personal income": {
+    "id": "PI",
+    "label": "Personal Income",
+    "type": "income"
+  },
+  "consumer spending": {
+    "id": "PCE",
+    "label": "Personal Consumption Expenditures",
+    "type": "consumer"
+  },
+  "consumer sentiment": {
+    "id": "UMCSENT",
+    "label": "University of Michigan: Consumer Sentiment",
+    "type": "sentiment"
+  },
+  "michigan sentiment": {
+    "id": "UMCSENT",
+    "label": "University of Michigan: Consumer Sentiment",
+    "type": "sentiment"
+  },
+  "michigan inflation expectations": {
+    "id": "MICH",
+    "label": "University of Michigan: Inflation Expectations",
+    "type": "expectations"
+  },
+  "inflation expectations": {
+    "id": "T10YIE",
+    "label": "10-Year Breakeven Inflation Rate",
+    "type": "expectations"
+  },
+  "housing starts": {
+    "id": "HOUST",
+    "label": "Housing Starts: Total New Privately Owned Housing Units Started",
+    "type": "housing"
+  },
+  "ppi": {
+    "id": "PPIACO",
+    "label": "Producer Price Index for All Commodities",
+    "type": "inflation"
+  },
+  "core ppi": {
+    "id": "PPIENG",
+    "label": "Core Producer Price Index (No Food, Energy, Trade)",
+    "type": "inflation"
+  },
+  "retail sales": {
+    "id": "RSAFS",
+    "label": "Retail Sales: Total",
+    "type": "consumer"
+  }
+}
