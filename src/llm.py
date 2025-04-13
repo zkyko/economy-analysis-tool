@@ -1,12 +1,17 @@
 import os
 import json
 import requests
-from dotenv import load_dotenv
 import re
 
-load_dotenv()
+# ✅ Use st.secrets on Streamlit Cloud; fallback to .env locally
+try:
+    import streamlit as st
+    DEEPSEEK_API_KEY = st.secrets["DEEPSEEK_API_KEY"]
+except Exception:
+    from dotenv import load_dotenv
+    load_dotenv()
+    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
 HEADERS = {
@@ -36,24 +41,21 @@ Do not include extra explanation, markdown, or text outside the JSON.
     try:
         res = requests.post(DEEPSEEK_URL, headers=HEADERS, json=body)
         res.raise_for_status()
-
         text = res.json()["choices"][0]["message"]["content"].strip()
-        print("🧠 LLM Raw Output:\n", text)
 
-        # ✅ Clean markdown backticks if present
         if text.startswith("```"):
             text = re.sub(r"```(json)?", "", text).strip()
 
         return json.loads(text)
 
     except requests.exceptions.RequestException as e:
-        print("❌ Request error:", e)
+        print("❌ DeepSeek request error:", e)
         return None
     except json.JSONDecodeError as e:
-        print("⚠️ JSON parse error:", e)
+        print("⚠️ DeepSeek JSON parse error:", e)
         return None
 
-# ✅ New Step 1: Summary Generator
+
 def summarize_series(series_name, df):
     system_msg = f"""You are an economic analyst. Summarize the trend in the following data in simple, plain English.
 Highlight major changes, turning points, and trends. Provide a short conclusion on what this might mean.

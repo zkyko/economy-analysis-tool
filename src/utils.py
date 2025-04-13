@@ -3,10 +3,16 @@ import requests
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
 
-load_dotenv()
-API_KEY = os.getenv("FRED_API_KEY")
+# 🌐 Use st.secrets for Streamlit Cloud (fallback to .env locally)
+try:
+    import streamlit as st
+    API_KEY = st.secrets["FRED_API_KEY"]
+except Exception:
+    from dotenv import load_dotenv
+    load_dotenv()
+    API_KEY = os.getenv("FRED_API_KEY")
+
 
 def get_fred_data(series_id, start_date="2000-01-01"):
     url = "https://api.stlouisfed.org/fred/series/observations"
@@ -17,12 +23,24 @@ def get_fred_data(series_id, start_date="2000-01-01"):
         "observation_start": start_date
     }
 
-    res = requests.get(url, params=params)
-    data = res.json()
-    df = pd.DataFrame(data["observations"])
-    df["date"] = pd.to_datetime(df["date"])
-    df["value"] = pd.to_numeric(df["value"], errors="coerce")
-    return df
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+
+        # 🚨 Handle bad response
+        if "observations" not in data:
+            st.warning(f"FRED API Error for {series_id}: {data.get('message', 'No observations found.')}")
+            return pd.DataFrame()
+
+        df = pd.DataFrame(data["observations"])
+        df["date"] = pd.to_datetime(df["date"])
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
+        return df
+
+    except Exception as e:
+        st.error(f"Failed to fetch FRED data: {e}")
+        return pd.DataFrame()
+
 
 def detect_start_date(query: str, default="2010-01-01"):
     now = datetime.now()
@@ -36,6 +54,7 @@ def detect_start_date(query: str, default="2010-01-01"):
         return (now - relativedelta(years=1)).strftime("%Y-%m-%d")
 
     return default
+
 
 def filter_recent_data(df, start_date):
     return df[df["date"] >= pd.to_datetime(start_date)].copy()
