@@ -15,10 +15,12 @@ except Exception:
 
 
 def get_fred_data(series_id, start_date="2000-01-01"):
+    import requests
+
     url = "https://api.stlouisfed.org/fred/series/observations"
     params = {
         "series_id": series_id,
-        "api_key": API_KEY,
+        "api_key": API_KEY,  # This uses st.secrets or .env based on how you configured above
         "file_type": "json",
         "observation_start": start_date
     }
@@ -27,34 +29,17 @@ def get_fred_data(series_id, start_date="2000-01-01"):
         res = requests.get(url, params=params)
         data = res.json()
 
-        # 🚨 Handle bad response
+        # ✅ Check for 'observations' key first
         if "observations" not in data:
-            st.warning(f"FRED API Error for {series_id}: {data.get('message', 'No observations found.')}")
+            print(f"❌ FRED API Error for {series_id}: {data}")
             return pd.DataFrame()
 
         df = pd.DataFrame(data["observations"])
-        df["date"] = pd.to_datetime(df["date"])
         df["value"] = pd.to_numeric(df["value"], errors="coerce")
+        df["date"] = pd.to_datetime(df["date"])
         return df
 
     except Exception as e:
-        st.error(f"Failed to fetch FRED data: {e}")
+        print("❌ get_fred_data() failed:", e)
         return pd.DataFrame()
-
-
-def detect_start_date(query: str, default="2010-01-01"):
-    now = datetime.now()
-    query = query.lower()
-
-    if "last 2 months" in query:
-        return (now - relativedelta(months=2)).strftime("%Y-%m-%d")
-    if "last 6 months" in query:
-        return (now - relativedelta(months=6)).strftime("%Y-%m-%d")
-    if "past year" in query or "last year" in query:
-        return (now - relativedelta(years=1)).strftime("%Y-%m-%d")
-
-    return default
-
-
-def filter_recent_data(df, start_date):
-    return df[df["date"] >= pd.to_datetime(start_date)].copy()
+    
