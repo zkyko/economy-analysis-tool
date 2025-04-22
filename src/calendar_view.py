@@ -1,65 +1,55 @@
-# src/calendar_view.py
-
-import pandas as pd
-import plotly.express as px
 import streamlit as st
-from datetime import datetime
+import plotly.express as px
+import pandas as pd
+import json
+import os
 
-def parse_date(d):
-    try:
-        return datetime.strptime(d, "%B %d, %Y")
-    except:
-        return None
+def render_speech_timeline():
+    st.markdown("### 🗓️ Fed Speech Timeline")
 
-def render_calendar(speeches):
-    if not speeches:
-        st.info("No speeches available for calendar view.")
+    filepath = "src/data/fed_rss_summaries.json"
+
+    if not os.path.exists(filepath):
+        st.error("Could not find `fed_rss_summaries.json`.")
         return
 
-    st.markdown("---")
-    st.subheader("📅 Speech Calendar (Timeline View)")
+    with open(filepath) as f:
+        data = json.load(f)
 
-    # Prepare data
-    timeline_data = []
-    for s in speeches:
-        date_obj = parse_date(s.get("date", ""))
-        if date_obj:
-            timeline_data.append({
-                "Title": s.get("title", "Unknown Title"),
-                "Speaker": s.get("speaker", "Unknown"),
-                "Date": date_obj,
-                "Sentiment": s.get("sentiment", "Unknown"),
-                "URL": s.get("url", "#")
-            })
-
-    if not timeline_data:
-        st.warning("No valid dates found in speeches.")
+    if not data:
+        st.warning("No speech data found.")
         return
 
-    df = pd.DataFrame(timeline_data)
+    df = pd.DataFrame(data)
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
 
+    # Filter out rows with invalid dates
+    df = df[df["date"].notnull()]
+
+    # --- Optional: Sentiment Filter ---
+    sentiments = ["All"] + sorted(df["sentiment"].dropna().unique())
+    selected_sentiment = st.selectbox("Filter by Sentiment", sentiments, index=0)
+
+    if selected_sentiment != "All":
+        df = df[df["sentiment"] == selected_sentiment]
+
+    # Plotly timeline chart
     fig = px.timeline(
         df,
-        x_start="Date",
-        x_end="Date",
-        y="Speaker",
-        color="Sentiment",
-        hover_name="Title",
-        hover_data={"Date": True, "Speaker": True, "Sentiment": True},
-        title="Federal Reserve Speech Timeline",
-        color_discrete_map={
-            "Hawkish": "red",
-            "Dovish": "green",
-            "Neutral": "gray",
-            "Unknown": "lightgray"
-        }
+        x_start="date",
+        x_end="date",
+        y="speaker",
+        color="sentiment",
+        hover_data=["title", "summary", "location"],
+        title="Fed Speeches by Date & Sentiment"
     )
 
-    fig.update_yaxes(autorange="reversed")
     fig.update_layout(
-        height=500,
-        margin=dict(l=10, r=10, t=40, b=40),
-        hoverlabel=dict(bgcolor="white")
+        height=600,
+        margin=dict(t=40, b=40),
+        xaxis_title="Date",
+        yaxis_title="Speaker",
+        template="plotly_dark"
     )
 
     st.plotly_chart(fig, use_container_width=True)

@@ -4,4 +4,3 @@ pandas
 matplotlib
 python-dotenv
 openai  # or deepseek if their SDK exists
-plotly>=5.0.0

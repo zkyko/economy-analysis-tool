@@ -1,70 +1,97 @@
 import os
 import json
 import requests
+from dotenv import load_dotenv
 import re
 
-# ✅ Use st.secrets on Streamlit Cloud; fallback to .env locally
-try:
-    import streamlit as st
-    DEEPSEEK_API_KEY = st.secrets["DEEPSEEK_API_KEY"]
-except Exception:
-    from dotenv import load_dotenv
-    load_dotenv()
-    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+load_dotenv()
 
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 
 HEADERS = {
-    "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+    "Authorization": f"Bearer {OPENAI_API_KEY}",
     "Content-Type": "application/json"
 }
 
-def extract_fred_series(prompt):
-    system_msg = """You are a helpful assistant that takes economic questions and returns relevant FRED series to query.
-Respond ONLY in valid JSON format like this:
+if not OPENAI_API_KEY:
+    import streamlit as st
+    st.warning("No OpenAI API key found.")
+
+
+def extract_fred_series(prompt, fallback=False):
+    fallback_result = {
+        "series": [
+            {"id": "CPIAUCSL", "label": "Consumer Price Index"},
+            {"id": "PPIACO", "label": "Producer Price Index"}
+        ],
+        "start_date": "2023-01-01"
+    }
+    if fallback:
+        print("🧪 Using fallback series for test mode.")
+        return fallback_result
+
+    system_msg = """
+You are an assistant that maps economic questions to FRED series.
+Return valid JSON with this structure:
+
 {
-  "series": [{"id": "CPIAUCSL", "label": "Consumer Price Index"}],
-  "start_date": "2018-01-01"
+  "series": [
+    {"id": "CPIAUCSL", "label": "Consumer Price Index"}
+  ],
+  "start_date": "2023-01-01"
 }
-Do not include extra explanation, markdown, or text outside the JSON.
+
+Don't return anything else.
 """
 
     body = {
-        "model": "deepseek-chat",
+        "model": "gpt-4-1106-preview",
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.3
+        "temperature": 0.2
     }
 
     try:
-        res = requests.post(DEEPSEEK_URL, headers=HEADERS, json=body)
+        res = requests.post(OPENAI_URL, headers=HEADERS, json=body)
         res.raise_for_status()
-        text = res.json()["choices"][0]["message"]["content"].strip()
+        raw = res.json()["choices"][0]["message"]["content"].strip()
+        print("🧠 LLM Raw Output:\n", raw)
+        # Remove code block markdown if present
+        if raw.startswith("```"):
+            raw = raw.strip("` ").replace("json", "")
+        try:
+            data = json.loads(raw)
+            print("✅ JSON parsed:", data)
+            if "series" in data:
+                print("✅ Extracted FRED series:", [s["id"] for s in data["series"]])
+            else:
+                print("⚠️ No 'series' key found in response.")
+            return data
+        except Exception as e:
+            print("❌ JSON Error:", e)
+            print("🔎 Raw text that failed to parse:\n", raw)
+            return fallback_result
+    except Exception as e:
+        print("❌ LLM API Error:", e)
+        return fallback_result
 
-        if text.startswith("```"):
-            text = re.sub(r"```(json)?", "", text).strip()
 
-        return json.loads(text)
-
-    except requests.exceptions.RequestException as e:
-        print("❌ DeepSeek request error:", e)
-        return None
-    except json.JSONDecodeError as e:
-        print("⚠️ DeepSeek JSON parse error:", e)
-        return None
-
-
-def summarize_series(series_name, df):
-    system_msg = f"""You are an economic analyst. Summarize the trend in the following data in simple, plain English.
+def summarize_series(series_name, df, time_range=None, desc=None):
+    if df.empty:
+        return f"No data available for {series_name}."
+    # Convert df to CSV for LLM context (handle up to 100 rows for turbo context window)
+    csv_data = df.tail(100).to_csv(index=False)
+    system_msg = f"""You are an economic analyst. Summarize the trend in the following time series data in simple, plain English.
 Highlight major changes, turning points, and trends. Provide a short conclusion on what this might mean.
-
-Series name: {series_name}
-Time range: {df['date'].min().strftime('%Y-%m-%d')} to {df['date'].max().strftime('%Y-%m-%d')}
+Series: {series_name}
+Time range: {time_range or 'N/A'}
+Description: {desc or ''}
+CSV data:
+{csv_data}
 """
-
-    recent_data = df.tail(12)[["date", "value"]].copy()
     recent_data["date"] = recent_data["date"].dt.strftime("%Y-%m-%d")
     recent_data = recent_data.to_dict(orient="records")
 
